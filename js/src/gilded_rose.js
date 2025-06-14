@@ -4,7 +4,7 @@ function Item(name, sell_in, quality) {
   this.quality = quality;
 }
 
-var items = []
+var items = [];
 
 items.push(new Item('+5 Dexterity Vest', 10, 20));
 items.push(new Item('Aged Brie', 2, 0));
@@ -13,59 +13,71 @@ items.push(new Item('Sulfuras, Hand of Ragnaros', 0, 80));
 items.push(new Item('Backstage passes to a TAFKAL80ETC concert', 15, 20));
 items.push(new Item('Conjured Mana Cake', 3, 6));
 
+// Helper functions
+function isAgedBrie(item) {
+  return item.name === 'Aged Brie';
+}
+
+function isSulfuras(item) {
+  return item.name === 'Sulfuras, Hand of Ragnaros';
+}
+
+function isBackstagePass(item) {
+  return item.name === 'Backstage passes to a TAFKAL80ETC concert';
+}
+
+function isConjured(item) {
+  return item.name.toLowerCase().includes('conjured');
+}
+
+function increaseQuality(item, amount = 1) {
+  item.quality = Math.min(50, item.quality + amount);
+}
+
+function decreaseQuality(item, amount = 1) {
+  item.quality = Math.max(0, item.quality - amount);
+}
+
 function update_quality() {
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].name != 'Aged Brie' && items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-      if (items[i].quality > 0 && items[i].name != 'Sulfuras, Hand of Ragnaros') {
-        if (items[i].name.includes("Conjured")) {
-          items[i].quality = items[i].quality - 2;
-        } else {
-          items[i].quality = items[i].quality - 1;
-        }
-        if (items[i].quality < 0) {
-          items[i].quality = 0;
-        }
+  for (let i = 0; i < items.length; i++) {
+    let item = items[i];
+
+    if (isSulfuras(item)) {
+      // Legendary item: no change
+      continue;
+    }
+
+    if (isAgedBrie(item)) {
+      increaseQuality(item);
+    } else if (isBackstagePass(item)) {
+      if (item.sell_in > 10) {
+        increaseQuality(item);
+      } else if (item.sell_in > 5) {
+        increaseQuality(item, 2);
+      } else if (item.sell_in > 0) {
+        increaseQuality(item, 3);
+      } else {
+        // After concert
+        item.quality = 0;
       }
     } else {
-      if (items[i].quality < 50) {
-        items[i].quality = items[i].quality + 1
-        if (items[i].name == 'Backstage passes to a TAFKAL80ETC concert') {
-          if (items[i].sell_in < 11) {
-            if (items[i].quality < 50) {
-              items[i].quality = items[i].quality + 1
-            }
-          }
-          if (items[i].sell_in < 6) {
-            if (items[i].quality < 50) {
-              items[i].quality = items[i].quality + 1
-            }
-          }
-        }
-      }
+      // Normal or conjured item degradation
+      let degradeAmount = isConjured(item) ? 2 : 1;
+      decreaseQuality(item, degradeAmount);
     }
-    if (items[i].name != 'Sulfuras, Hand of Ragnaros') {
-      items[i].sell_in = items[i].sell_in - 1;
-    }
-    if (items[i].sell_in < 0) {
-      if (items[i].name != 'Aged Brie') {
-        if (items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-          if (items[i].quality > 0 && items[i].name != 'Sulfuras, Hand of Ragnaros') {
-            if (items[i].name.includes("Conjured")) {
-              items[i].quality = items[i].quality - 2;
-            } else {
-              items[i].quality = items[i].quality - 1;
-            }
-            if (items[i].quality < 0) {
-              items[i].quality = 0;
-            }
-          }
-        } else {
-          items[i].quality = items[i].quality - items[i].quality
-        }
+
+    // Decrease sell_in for all but Sulfuras
+    item.sell_in -= 1;
+
+    // If sell_in < 0, apply additional degradation
+    if (item.sell_in < 0) {
+      if (isAgedBrie(item)) {
+        increaseQuality(item);
+      } else if (isBackstagePass(item)) {
+        item.quality = 0;
       } else {
-        if (items[i].quality < 50) {
-          items[i].quality = items[i].quality + 1
-        }
+        let degradeAmount = isConjured(item) ? 2 : 1;
+        decreaseQuality(item, degradeAmount);
       }
     }
   }
