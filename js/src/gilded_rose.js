@@ -39,46 +39,51 @@ function decreaseQuality(item, amount = 1) {
 }
 
 function update_quality() {
-  for (let i = 0; i < items.length; i++) {
-    let item = items[i];
+  for (let item of items) {
+    if (isSulfuras(item)) continue;
 
-    if (isSulfuras(item)) {
-      // Legendary item: no change
-      continue;
-    }
-
-    if (isAgedBrie(item)) {
-      increaseQuality(item);
-    } else if (isBackstagePass(item)) {
-      if (item.sell_in > 10) {
-        increaseQuality(item);
-      } else if (item.sell_in > 5) {
-        increaseQuality(item, 2);
-      } else if (item.sell_in > 0) {
-        increaseQuality(item, 3);
-      } else {
-        // After concert
-        item.quality = 0;
-      }
-    } else {
-      // Normal or conjured item degradation
-      let degradeAmount = isConjured(item) ? 2 : 1;
-      decreaseQuality(item, degradeAmount);
-    }
-
-    // Decrease sell_in for all but Sulfuras
+    updateItemQuality(item);
     item.sell_in -= 1;
 
-    // If sell_in < 0, apply additional degradation
     if (item.sell_in < 0) {
-      if (isAgedBrie(item)) {
-        increaseQuality(item);
-      } else if (isBackstagePass(item)) {
-        item.quality = 0;
-      } else {
-        let degradeAmount = isConjured(item) ? 2 : 1;
-        decreaseQuality(item, degradeAmount);
-      }
+      updateExpiredItem(item);
     }
+  }
+}
+
+function updateItemQuality(item) {
+  if (isAgedBrie(item)) {
+    increaseQuality(item);
+  } else if (isBackstagePass(item)) {
+    updateBackstagePass(item);
+  } else {
+    degradeItem(item);
+  }
+}
+
+function updateBackstagePass(item) {
+  if (item.sell_in > 10) {
+    increaseQuality(item);
+  } else if (item.sell_in > 5) {
+    increaseQuality(item, 2);
+  } else if (item.sell_in > 0) {
+    increaseQuality(item, 3);
+  } else {
+    item.quality = 0;
+  }
+}
+
+function degradeItem(item) {
+  let degradeAmount = isConjured(item) ? 2 : 1;
+  decreaseQuality(item, degradeAmount);
+}
+
+function updateExpiredItem(item) {
+  if (isAgedBrie(item)) {
+    increaseQuality(item);
+  } else if (isBackstagePass(item)) {
+    item.quality = 0;
+  } else {
+    degradeItem(item);
   }
 }
